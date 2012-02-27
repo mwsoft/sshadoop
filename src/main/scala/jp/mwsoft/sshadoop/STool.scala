@@ -9,7 +9,7 @@ trait STool extends Configured with Tool {
     exit( ToolRunner.run( this, args ) )
   }
 
-  override def run( args: Array[String] ): Int = if ( exec( args ) ) 0 else 1
+  override def run( args: Array[String] ): Int = if ( runJob( args ) ) 0 else 1
 
-  def exec( args: Array[String] ): Boolean
+  def runJob( args: Array[String] ): Boolean
 }
