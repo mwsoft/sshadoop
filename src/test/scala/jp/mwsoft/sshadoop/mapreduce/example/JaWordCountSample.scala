@@ -1,4 +1,4 @@
-package jp.mwsoft.sshadoop.example
+package jp.mwsoft.sshadoop.mapreduce.example
 
 import scala.compat.Platform.currentTime
 import org.apache.hadoop.util.{ Tool, ToolRunner }
@@ -6,7 +6,7 @@ import org.apache.hadoop.conf.{ Configured, Configuration }
 import org.apache.hadoop.io.{ Text, LongWritable }
 import org.apache.hadoop.mapreduce.{ Job, Mapper }
 import org.atilika.kuromoji.Tokenizer
-import jp.mwsoft.sshadoop.{ SMapper, SReducer, SJob }
+import jp.mwsoft.sshadoop.mapreduce.{ SMapper, SReducer, SJob }
 
 /**
  * 日本語用ワードカウント。Kuromoji利用。http://www.atilika.org/
