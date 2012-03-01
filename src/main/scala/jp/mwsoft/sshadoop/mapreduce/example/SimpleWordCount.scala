@@ -7,7 +7,7 @@ import org.apache.hadoop.io.Text
 import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.Mapper
 import org.atilika.kuromoji.Tokenizer
-import jp.mwsoft.sshadoop.mapreduce.{ SMapper, SReducer, STool, SJob }
+import jp.mwsoft.sshadoop.mapreduce._
 
 object WordCountSample extends Configured with Tool with App {
 
@@ -17,7 +17,7 @@ object WordCountSample extends Configured with Tool with App {
 
     val job = new SJob(getConf(), "jobName")
 
-    job mapper (new MyMapper()) reducer (new MyReducer()) combiner (new MyReducer())
+    job mapper (new MyMapper()) reducer (new MyReducer())
 
     if (job.waitForCompletion(true)) 0 else 1
   }

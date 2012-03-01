@@ -34,7 +34,17 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.compress.CompressionCodec
+import org.apache.hadoop.io.{ BooleanWritable, ByteWritable, IntWritable, LongWritable, FloatWritable, DoubleWritable }
+import org.apache.hadoop.io.{ Text, BytesWritable, ArrayWritable }
 
+/**
+ * Hadoop Job class + "return this setter".
+ * mapper method set setJarByClass/setMapOutputKeyClass/setMapOutputValueClass automatically.
+ * reducer method set setOutputKeyClass/setOutputValueClass automatically.
+ * mapper /reducer /combiner check input/output type inconsistence.
+ *
+ * @author Watanabe Masato
+ */
 class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
 
   def this(conf: Configuration) = this(conf, null)
@@ -43,11 +53,9 @@ class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
 
   def this() = this(new Configuration())
 
-  protected var _mapper: Option[SMapper[_, _, _, _]] = None
+  protected var _mapper: Option[SMapperBase[_, _, _, _]] = None
 
-  protected var _reducer: Option[SReducer[_, _, _, _]] = None
-
-  protected var _combiner: Option[SReducer[_, _, _, _]] = None
+  protected var _reducer: Option[SReducerBase[_, _, _, _]] = None
 
   def fileInputPath(path: Path) = { FileInputFormat.setInputPaths(this, path); this }
 
@@ -67,28 +75,7 @@ class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
 
   def cacheArchives(value: Boolean) = { this.setCancelDelegationTokenUponJobCompletion(value); this }
 
-  def combiner(combinerInst: SReducer[_, _, _, _]) = {
-    if (_mapper.isDefined) {
-      if (_mapper.get.outputKeyClass != combinerInst.inputKeyClass)
-        throw new IllegalArgumentException("combiner input key must be equal to mapper output key")
-      if (_mapper.get.outputValueClass != combinerInst.inputValueClass)
-        throw new IllegalArgumentException("combiner value key must be equal to mapper output value")
-    }
-    if (_reducer.isDefined) {
-      if (_reducer.get.inputKeyClass != combinerInst.outputKeyClass)
-        throw new IllegalArgumentException("combiner output key must be equal to mapper input key")
-      if (_reducer.get.inputValueClass != combinerInst.outputValueClass)
-        throw new IllegalArgumentException("combiner output value must be equal to mapper input value")
-    }
-    _combiner = Some(combinerInst)
-    this.setCombinerClass(combinerInst.getClass())
-    this
-  }
-
-  def jCombinerr[T <: Reducer[_, _, _, _]](cls: Class[T]) = {
-    this.setReducerClass(cls)
-    this
-  }
+  def combinerClass[T <: Reducer[_, _, _, _]](cls: Class[T]) = { this.setReducerClass(cls); this }
 
   def groupingComparatorClass[T <: RawComparator[_]](cls: Class[T]) = { this.setGroupingComparatorClass(cls); this }
 
@@ -102,22 +89,13 @@ class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
 
   def mapOutputValueClass(cls: Class[_]) = { this.setMapOutputValueClass(cls); this }
 
-  def mapper[T <: SMapper[_, _, _, _]](mapperInst: T) = {
-    if (_combiner.isDefined) {
-      if (_combiner.get.inputKeyClass != mapperInst.outputKeyClass)
-        throw new IllegalArgumentException("mapper output key must be equal to combiner input key")
-      if (_combiner.get.inputValueClass != mapperInst.outputValueClass)
-        throw new IllegalArgumentException("mapper output value must be equal to combiner input value")
-    }
-    if (_reducer.isDefined) {
-      if (_reducer.get.inputKeyClass != mapperInst.outputKeyClass)
-        throw new IllegalArgumentException("mapper output key must be equal to reducer input key")
-      if (_reducer.get.inputValueClass != mapperInst.outputValueClass)
-        throw new IllegalArgumentException("mapper output value must be equal to reducer input value")
-    }
+  def mapOutputKeyValueClass(keyCls: Class[_], valueCls: Class[_]) = {
+    this.setMapOutputKeyClass(keyCls)
+    this.setMapOutputValueClass(valueCls)
+    this
+  }
 
-    this.setJarByClass(mapperInst.getClass)
-    this.setMapperClass(mapperInst.getClass)
+  def mapper[T <: SMapperBase[_, _, _, _]](mapperInst: T) = {
     this.setMapOutputKeyClass(mapperInst.outputKeyClass)
     this.setMapOutputValueClass(mapperInst.outputValueClass)
     if (_reducer.isEmpty) {
@@ -125,13 +103,24 @@ class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
       this.setOutputValueClass(mapperInst.outputValueClass)
     }
     _mapper = Some(mapperInst)
+    this.setJarByClass(mapperInst.getClass)
+    this.setMapperClass(mapperInst.getClass)
 
     this
   }
 
-  def jMapper[T <: Mapper[_, _, _, _]](cls: Class[T]) = {
+  def mapperClass[T <: Mapper[_, _, _, _]](cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null) = {
     this.setMapperClass(cls)
+    if (keyOutCls != null) this.setMapOutputKeyClass(keyOutCls)
+    if (valOutCls != null) this.setMapOutputValueClass(keyOutCls)
     this
+  }
+
+  def mapperManifest(mapper: Manifest[_], keyPos: Int = 2, valPos: Int = 3) {
+    this.setMapOutputKeyClass(mapper.erasure)
+    val list = mapper.typeArguments
+    if (list.size > keyPos) this.setMapOutputKeyClass(list(keyPos).erasure)
+    if (list.size > valPos) this.setMapOutputValueClass(list(valPos).erasure)
   }
 
   def numReduceTasks(num: Int) = { this.setNumReduceTasks(num); this }
@@ -140,27 +129,31 @@ class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
 
   def outputKeyClass(cls: Class[_]) = { this.setOutputKeyClass(cls); this }
 
+  def outputKeyValueClass(keyCls: Class[_], valueCls: Class[_]) = {
+    this.setOutputKeyClass(keyCls)
+    this.setOutputValueClass(valueCls)
+    this
+  }
+
   def outputValueClass(cls: Class[_]) = { this.setOutputValueClass(cls); this }
 
   def partitionerClass[T <: Partitioner[_, _]](cls: Class[T]) = { this.setPartitionerClass(cls); this }
 
-  def reducer(reducerInst: SReducer[_, _, _, _]) = {
-    if (_mapper.isDefined) {
-      if (_mapper.get.outputKeyClass != reducerInst.inputKeyClass)
-        throw new IllegalArgumentException("combiner input key must be equal to mapper output key")
-      if (_mapper.get.outputValueClass != reducerInst.inputValueClass)
-        throw new IllegalArgumentException("combiner value key must be equal to mapper output value")
-    }
-    if (_combiner.isDefined) {
-      if (_combiner.get.inputKeyClass != reducerInst.outputKeyClass)
-        throw new IllegalArgumentException("combiner output key must be equal to mapper input key")
-      if (_combiner.get.inputValueClass != reducerInst.outputValueClass)
-        throw new IllegalArgumentException("combiner output value must be equal to mapper input value")
+  def reducer(reducerInst: Reducer[_, _, _, _]) = {
+    if (reducerInst.isInstanceOf[SReducerBase[_, _, _, _]]) {
+      val sreducerInst = reducerInst.asInstanceOf[SReducerBase[_, _, _, _]]
+      this.setOutputKeyClass(sreducerInst.outputKeyClass)
+      this.setOutputValueClass(sreducerInst.outputValueClass)
+      _reducer = Some(sreducerInst)
     }
     this.setReducerClass(reducerInst.getClass())
-    this.setOutputKeyClass(reducerInst.outputKeyClass)
-    this.setOutputValueClass(reducerInst.outputValueClass)
-    _reducer = Some(reducerInst)
+    this
+  }
+
+  def reducerClass[T <: Reducer[_, _, _, _]](cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null) = {
+    this.setReducerClass(cls)
+    if (keyOutCls != null) this.setOutputKeyClass(keyOutCls)
+    if (valOutCls != null) this.setOutputValueClass(valOutCls)
     this
   }
 

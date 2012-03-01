@@ -19,12 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package jp.mwsoft.sshadoop.mapreduce
+package jp.mwsoft.sshadoop.util
 
 import org.apache.hadoop.conf.Configured
 import org.apache.hadoop.util.{ Tool, ToolRunner }
+import jp.mwsoft.sshadoop.mapreduce.ImplicitConversions
 
-trait STool extends Configured with Tool {
+trait STool extends Configured with Tool with ImplicitConversions {
 
   def main(args: Array[String]) {
     exit(ToolRunner.run(this, args))
@@ -33,4 +34,5 @@ trait STool extends Configured with Tool {
   override def run(args: Array[String]): Int = if (runJob(args)) 0 else 1
 
   def runJob(args: Array[String]): Boolean
+
 }

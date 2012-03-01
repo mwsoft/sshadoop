@@ -6,7 +6,8 @@ import org.apache.hadoop.conf.{ Configured, Configuration }
 import org.apache.hadoop.io.{ Text, LongWritable }
 import org.apache.hadoop.mapreduce.{ Job, Mapper }
 import org.atilika.kuromoji.Tokenizer
-import jp.mwsoft.sshadoop.mapreduce.{ SMapper, SReducer, STool, SJob }
+import jp.mwsoft.sshadoop.mapreduce._
+import jp.mwsoft.sshadoop.util.STool
 
 object MultiJobWordCountWithSTool extends App {
   val ret = ToolRunner.run(WordCount, args)

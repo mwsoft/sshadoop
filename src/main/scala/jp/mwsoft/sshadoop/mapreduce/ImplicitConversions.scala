@@ -28,7 +28,23 @@ import org.apache.hadoop.io.MapWritable
 
 object ImplicitConversions extends ImplicitConversions
 
+/**
+ * implicit conversions
+ * ex: Int <=> IntWritable, String <=> Text
+ *
+ * @author Watanabe Masato
+ */
 trait ImplicitConversions {
+
+  val clsBooleanWritable = classOf[BooleanWritable]
+  val clsByteWritable = classOf[ByteWritable]
+  val clsIntWritable = classOf[IntWritable]
+  val clsLongWritable = classOf[LongWritable]
+  val clsFloatWritable = classOf[FloatWritable]
+  val clsDoubleWritable = classOf[DoubleWritable]
+  val clsText = classOf[Text]
+  val clsBytesWritable = classOf[BytesWritable]
+  val clsArrayWritable = classOf[ArrayWritable]
 
   implicit def hadoopBooleanWritable2boolean(value: BooleanWritable) = value.get
   implicit def boolean2hadoopBooleanWritable(value: Boolean) = new BooleanWritable(value)
