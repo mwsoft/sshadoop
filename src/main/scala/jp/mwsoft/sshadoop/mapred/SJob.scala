@@ -9,4 +9,6 @@ class SJob(conf: JobConf, dependingJobs: ArrayList[Job]) extends Job(conf, depen
 
   def this(conf: JobConf) = this(conf, null)
 
+  
+  
 }

@@ -53,9 +53,9 @@ class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
 
   def this() = this(new Configuration())
 
-  protected var _mapper: Option[SMapperBase[_, _, _, _]] = None
+  protected var _mapper: Option[SMapper[_, _, _, _]] = None
 
-  protected var _reducer: Option[SReducerBase[_, _, _, _]] = None
+  protected var _reducer: Option[SReducer[_, _, _, _]] = None
 
   def fileInputPath(path: Path) = { FileInputFormat.setInputPaths(this, path); this }
 
@@ -95,14 +95,17 @@ class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
     this
   }
 
-  def mapper[T <: SMapperBase[_, _, _, _]](mapperInst: T) = {
-    this.setMapOutputKeyClass(mapperInst.outputKeyClass)
-    this.setMapOutputValueClass(mapperInst.outputValueClass)
-    if (_reducer.isEmpty) {
-      this.setOutputKeyClass(mapperInst.outputKeyClass)
-      this.setOutputValueClass(mapperInst.outputValueClass)
+  def mapper[T <: Mapper[_, _, _, _]](mapperInst: T) = {
+    if (mapperInst.isInstanceOf[SMapper[_, _, _, _]]) {
+      val smapperInst = mapperInst.asInstanceOf[SMapper[_, _, _, _]]
+      this.setMapOutputKeyClass(smapperInst.outputKeyClass)
+      this.setMapOutputValueClass(smapperInst.outputValueClass)
+      if (_reducer.isEmpty) {
+        this.setOutputKeyClass(smapperInst.outputKeyClass)
+        this.setOutputValueClass(smapperInst.outputValueClass)
+      }
+      _mapper = Some(smapperInst)
     }
-    _mapper = Some(mapperInst)
     this.setJarByClass(mapperInst.getClass)
     this.setMapperClass(mapperInst.getClass)
 
@@ -140,8 +143,8 @@ class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
   def partitionerClass[T <: Partitioner[_, _]](cls: Class[T]) = { this.setPartitionerClass(cls); this }
 
   def reducer(reducerInst: Reducer[_, _, _, _]) = {
-    if (reducerInst.isInstanceOf[SReducerBase[_, _, _, _]]) {
-      val sreducerInst = reducerInst.asInstanceOf[SReducerBase[_, _, _, _]]
+    if (reducerInst.isInstanceOf[SReducer[_, _, _, _]]) {
+      val sreducerInst = reducerInst.asInstanceOf[SReducer[_, _, _, _]]
       this.setOutputKeyClass(sreducerInst.outputKeyClass)
       this.setOutputValueClass(sreducerInst.outputValueClass)
       _reducer = Some(sreducerInst)

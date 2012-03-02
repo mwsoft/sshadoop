@@ -23,16 +23,12 @@ package jp.mwsoft.sshadoop.mapreduce
 
 import org.apache.hadoop.mapreduce.{ Mapper }
 
-class SMapper[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](
+abstract class SMapper[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](
   implicit keyOutType: Manifest[KEY_OUT], valOutType: Manifest[VAL_OUT])
-    extends SMapperBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](keyOutType, valOutType) with ImplicitConversions
-
-class SMapperBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](
-  keyOutType: Manifest[KEY_OUT], valOutType: Manifest[VAL_OUT])
     extends Mapper[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT] with ImplicitConversions {
 
   type Context = Mapper[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT]#Context
 
-  def outputKeyClass = if (keyOutType != null) keyOutType.erasure.asInstanceOf[Class[KEY_OUT]] else null
-  def outputValueClass = if (valOutType != null) valOutType.erasure.asInstanceOf[Class[VAL_OUT]] else null
+  def outputKeyClass = keyOutType.erasure.asInstanceOf[Class[KEY_OUT]]
+  def outputValueClass = valOutType.erasure.asInstanceOf[Class[VAL_OUT]]
 }

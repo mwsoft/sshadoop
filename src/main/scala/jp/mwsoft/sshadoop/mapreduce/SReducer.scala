@@ -23,16 +23,12 @@ package jp.mwsoft.sshadoop.mapreduce
 
 import org.apache.hadoop.mapreduce.{ Reducer }
 
-class SReducer[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](
+abstract class SReducer[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](
   implicit val keyOutType: Manifest[KEY_OUT], val valOutType: Manifest[VAL_OUT])
-    extends SReducerBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT] {
+    extends Reducer[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT] with ImplicitConversions {
 
   def outputKeyClass = keyOutType.erasure.asInstanceOf[Class[KEY_OUT]]
   def outputValueClass = valOutType.erasure.asInstanceOf[Class[VAL_OUT]]
-}
-
-abstract class SReducerBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT]
-    extends Reducer[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT] with ImplicitConversions {
 
   def reduce(key: KEY_IN, values: Iterator[VAL_IN], context: Context) {}
 
@@ -41,7 +37,4 @@ abstract class SReducerBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT]
   override def reduce(key: KEY_IN, values: java.lang.Iterable[VAL_IN], context: Context) {
     reduce(key, javaIterator2scalaIterator(values.iterator()), context)
   }
-
-  def outputKeyClass: Class[_]
-  def outputValueClass: Class[_]
 }
