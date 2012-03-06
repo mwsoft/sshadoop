@@ -1,23 +1,19 @@
-/*
- * Copyright (c) 2012 Watanabe Masato
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package jp.mwsoft.sshadoop.mapreduce
 
@@ -36,6 +32,9 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.compress.CompressionCodec
 import org.apache.hadoop.io.{ BooleanWritable, ByteWritable, IntWritable, LongWritable, FloatWritable, DoubleWritable }
 import org.apache.hadoop.io.{ Text, BytesWritable, ArrayWritable }
+import org.apache.hadoop.fs.PathFilter
+import org.apache.hadoop.io.SequenceFile
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat
 
 /**
  * Hadoop Job class + "return this setter".
@@ -45,123 +44,162 @@ import org.apache.hadoop.io.{ Text, BytesWritable, ArrayWritable }
  *
  * @author Watanabe Masato
  */
-class SJob(conf: Configuration, jobName: String) extends Job(conf, jobName) {
+class SJob( conf: Configuration, jobName: String ) extends Job( conf, jobName ) {
 
-  def this(conf: Configuration) = this(conf, null)
+  def this( conf: Configuration ) = this( conf, null )
 
-  def this(jobName: String) = this(new Configuration(), jobName)
+  def this( jobName: String ) = this( new Configuration(), jobName )
 
-  def this() = this(new Configuration())
+  def this() = this( new Configuration() )
 
-  protected var _mapper: Option[SMapper[_, _, _, _]] = None
+  /** FileInputFormat.setInputPaths */
+  def fileInputPaths( paths: Path* ) = { FileInputFormat.setInputPaths( this, paths: _* ); this }
 
-  protected var _reducer: Option[SReducer[_, _, _, _]] = None
+  /** FileInputFormat.setInputPaths */
+  def fileInputPaths( path: String ) = { FileInputFormat.setInputPaths( this, path ); this }
 
-  def fileInputPath(path: Path) = { FileInputFormat.setInputPaths(this, path); this }
-
-  def fileInputPath(path: String) = { FileInputFormat.setInputPaths(this, new Path(path)); this }
-
-  def fileOutputPath(path: Path) = { FileOutputFormat.setOutputPath(this, path); this }
-
-  def fileOutputPath(path: String) = { FileOutputFormat.setOutputPath(this, new Path(path)); this }
-
-  def fileCompressOutput(value: Boolean) = { FileOutputFormat.setCompressOutput(this, true); this }
-
-  def fileOutputCompressorClass[T <: CompressionCodec](cls: Class[T]) = {
-    FileOutputFormat.setOutputCompressorClass(this, cls)
-    fileCompressOutput(true)
+  /** FileInputFormat.setInputPathFilter */
+  def fileInputPathFilter[T <: PathFilter]( filter: Class[T] ) = {
+    FileInputFormat.setInputPathFilter( this, filter )
     this
   }
 
-  def cacheArchives(value: Boolean) = { this.setCancelDelegationTokenUponJobCompletion(value); this }
+  /** FileOutputFormat.setOutputPaths */
+  def fileOutputPath( path: Path ) = { FileOutputFormat.setOutputPath( this, path ); this }
 
-  def combinerClass[T <: Reducer[_, _, _, _]](cls: Class[T]) = { this.setReducerClass(cls); this }
+  /** FileOutputFormat.setOutputPaths */
+  def fileOutputPath( path: String ) = { FileOutputFormat.setOutputPath( this, new Path( path ) ); this }
 
-  def groupingComparatorClass[T <: RawComparator[_]](cls: Class[T]) = { this.setGroupingComparatorClass(cls); this }
+  /** FileOutputFormat.setCompressOutput */
+  def fileCompressOutput( value: Boolean ) = { FileOutputFormat.setCompressOutput( this, true ); this }
 
-  def inputFormatClass[T <: InputFormat[_, _]](cls: Class[T]) = { this.setInputFormatClass(cls); this }
-
-  def jarByClass(cls: Class[_]) = { this.setJarByClass(cls); this }
-
-  def jobName(name: String) = { this.setJobName(name); this }
-
-  def mapOutputKeyClass(cls: Class[_]) = { this.setMapOutputKeyClass(cls); this }
-
-  def mapOutputValueClass(cls: Class[_]) = { this.setMapOutputValueClass(cls); this }
-
-  def mapOutputKeyValueClass(keyCls: Class[_], valueCls: Class[_]) = {
-    this.setMapOutputKeyClass(keyCls)
-    this.setMapOutputValueClass(valueCls)
+  /** FileOutputFormat.setOutputCompressorClass */
+  def fileOutputCompressorClass[T <: CompressionCodec]( cls: Class[T] ) = {
+    FileOutputFormat.setOutputCompressorClass( this, cls )
     this
   }
 
-  def mapper[T <: Mapper[_, _, _, _]](mapperInst: T) = {
-    if (mapperInst.isInstanceOf[SMapper[_, _, _, _]]) {
-      val smapperInst = mapperInst.asInstanceOf[SMapper[_, _, _, _]]
-      this.setMapOutputKeyClass(smapperInst.outputKeyClass)
-      this.setMapOutputValueClass(smapperInst.outputValueClass)
-      if (_reducer.isEmpty) {
-        this.setOutputKeyClass(smapperInst.outputKeyClass)
-        this.setOutputValueClass(smapperInst.outputValueClass)
-      }
-      _mapper = Some(smapperInst)
+  /** SequenceFileOutputFormat.setOutputCompressionType */
+  def outputCompressionType( style: SequenceFile.CompressionType ) = {
+    SequenceFileOutputFormat.setOutputCompressionType( this, style )
+    this
+  }
+
+  /** Job.setCancelDelegationTokenUponJobCompletion */
+  def cancelDelegationTokenUponJobCompletion( value: Boolean ) = {
+    this.setCancelDelegationTokenUponJobCompletion( value )
+    this
+  }
+
+  /** Job.setCombinerClass */
+  def combiner[T <: Reducer[_, _, _, _]]( combiner: T ) = { this.setReducerClass( combiner.getClass() ); this }
+
+  /** Job.setCombinerClass */
+  def combinerClass[T <: Reducer[_, _, _, _]]( cls: Class[T] ) = { this.setReducerClass( cls ); this }
+
+  /** Job.setGroupingComparatorClass */
+  def groupingComparatorClass[T <: RawComparator[_]]( cls: Class[T] ) = { this.setGroupingComparatorClass( cls ); this }
+
+  /** Job.setInputFormatClass */
+  def inputFormatClass[T <: InputFormat[_, _]]( cls: Class[T] ) = { this.setInputFormatClass( cls ); this }
+
+  /** Job.setJarByClass */
+  def jarByClass( cls: Class[_] ) = { this.setJarByClass( cls ); this }
+
+  /** Job.setJobName */
+  def jobName( name: String ) = { this.setJobName( name ); this }
+
+  /** Job.setMapOutputKeyClass */
+  def mapOutputKeyClass( cls: Class[_] ) = { this.setMapOutputKeyClass( cls ); this }
+
+  /** Job.setMapOutputValueClass */
+  def mapOutputValueClass( cls: Class[_] ) = { this.setMapOutputValueClass( cls ); this }
+
+  /**
+   * setMapOutputKeyClass( keyCls )
+   * setMapOutputValueClass( valueCls )
+   */
+  def mapOutputKeyValueClass( keyCls: Class[_], valueCls: Class[_] ) = {
+    this.setMapOutputKeyClass( keyCls )
+    this.setMapOutputValueClass( valueCls )
+    this
+  }
+
+  /**
+   * Job.setJarByClass( inst.getClass )
+   * Job.setMapperClass( inst.getClass )
+   * If instance isInstanceOf SMapper, call setMapOutputKeyClass and setMapOutputValueClass automatically.
+   */
+  def mapper[T <: Mapper[_, _, _, _]]( inst: T ) = {
+    if ( inst.isInstanceOf[SMapper[_, _, _, _]] ) {
+      val sinst = inst.asInstanceOf[SMapper[_, _, _, _]]
+      this.setMapOutputKeyClass( sinst.outputKeyClass )
+      this.setMapOutputValueClass( sinst.outputValueClass )
     }
-    this.setJarByClass(mapperInst.getClass)
-    this.setMapperClass(mapperInst.getClass)
-
+    this.setJarByClass( inst.getClass )
+    this.setMapperClass( inst.getClass )
     this
   }
 
-  def mapperClass[T <: Mapper[_, _, _, _]](cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null) = {
-    this.setMapperClass(cls)
-    if (keyOutCls != null) this.setMapOutputKeyClass(keyOutCls)
-    if (valOutCls != null) this.setMapOutputValueClass(keyOutCls)
+  /** Job.setMapperClass */
+  def mapperClass[T <: Mapper[_, _, _, _]]( cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null ) = {
+    this.setMapperClass( cls )
+    if ( keyOutCls != null ) this.setMapOutputKeyClass( keyOutCls )
+    if ( valOutCls != null ) this.setMapOutputValueClass( keyOutCls )
     this
   }
 
-  def mapperManifest(mapper: Manifest[_], keyPos: Int = 2, valPos: Int = 3) {
-    this.setMapOutputKeyClass(mapper.erasure)
-    val list = mapper.typeArguments
-    if (list.size > keyPos) this.setMapOutputKeyClass(list(keyPos).erasure)
-    if (list.size > valPos) this.setMapOutputValueClass(list(valPos).erasure)
-  }
+  /** Job.setNumReduceTasks */
+  def numReduceTasks( num: Int ) = { this.setNumReduceTasks( num ); this }
 
-  def numReduceTasks(num: Int) = { this.setNumReduceTasks(num); this }
+  /** Job.setOutputFormatClass */
+  def outputFormatClass[T <: OutputFormat[_, _]]( cls: Class[T] ) = { this.setOutputFormatClass( cls ); this }
 
-  def outputFormatClass[T <: OutputFormat[_, _]](cls: Class[T]) = { this.setOutputFormatClass(cls); this }
+  /** Job.setOutputKeyClass */
+  def outputKeyClass( cls: Class[_] ) = { this.setOutputKeyClass( cls ); this }
 
-  def outputKeyClass(cls: Class[_]) = { this.setOutputKeyClass(cls); this }
-
-  def outputKeyValueClass(keyCls: Class[_], valueCls: Class[_]) = {
-    this.setOutputKeyClass(keyCls)
-    this.setOutputValueClass(valueCls)
+  /**
+   * Job.setOutputKeyClass( keyCls )
+   * Job.setOutputValueClass( valueCls )
+   */
+  def outputKeyValueClass( keyCls: Class[_], valueCls: Class[_] ) = {
+    this.setOutputKeyClass( keyCls )
+    this.setOutputValueClass( valueCls )
     this
   }
 
-  def outputValueClass(cls: Class[_]) = { this.setOutputValueClass(cls); this }
+  /** Job.setOutputValueClass */
+  def outputValueClass( cls: Class[_] ) = { this.setOutputValueClass( cls ); this }
 
-  def partitionerClass[T <: Partitioner[_, _]](cls: Class[T]) = { this.setPartitionerClass(cls); this }
+  /** Job.setPartitionerClass */
+  def partitionerClass[T <: Partitioner[_, _]]( cls: Class[T] ) = { this.setPartitionerClass( cls ); this }
 
-  def reducer(reducerInst: Reducer[_, _, _, _]) = {
-    if (reducerInst.isInstanceOf[SReducer[_, _, _, _]]) {
-      val sreducerInst = reducerInst.asInstanceOf[SReducer[_, _, _, _]]
-      this.setOutputKeyClass(sreducerInst.outputKeyClass)
-      this.setOutputValueClass(sreducerInst.outputValueClass)
-      _reducer = Some(sreducerInst)
+  /**
+   * Job.setReducerClass( inst.getClass )
+   * If instance isInstanceOf SReducer, call setOutputKeyClass and setOutputValueClass automatically.
+   */
+  def reducer( inst: Reducer[_, _, _, _] ) = {
+    if ( inst.isInstanceOf[SReducer[_, _, _, _]] ) {
+      val sInst = inst.asInstanceOf[SReducer[_, _, _, _]]
+      this.setOutputKeyClass( sInst.outputKeyClass )
+      this.setOutputValueClass( sInst.outputValueClass )
     }
-    this.setReducerClass(reducerInst.getClass())
+    this.setReducerClass( inst.getClass() )
     this
   }
 
-  def reducerClass[T <: Reducer[_, _, _, _]](cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null) = {
-    this.setReducerClass(cls)
-    if (keyOutCls != null) this.setOutputKeyClass(keyOutCls)
-    if (valOutCls != null) this.setOutputValueClass(valOutCls)
+  /** Job.setReducerClass */
+  def reducerClass[T <: Reducer[_, _, _, _]]( cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null ) = {
+    this.setReducerClass( cls )
+    if ( keyOutCls != null ) this.setOutputKeyClass( keyOutCls )
+    if ( valOutCls != null ) this.setOutputValueClass( valOutCls )
     this
   }
 
-  def sortComparatorClass[T <: RawComparator[_]](cls: Class[T]) = { this.setSortComparatorClass(cls); this }
+  /** Job.sortComparatorClass */
+  def sortComparatorClass[T <: RawComparator[_]]( cls: Class[T] ) = { this.setSortComparatorClass( cls ); this }
 
-  def workingDirectory(path: Path) = { this.setWorkingDirectory(path); this }
+  /** Job.setWorkingDirectory */
+  def workingDirectory( path: Path ) = { this.setWorkingDirectory( path ); this }
 
 }
