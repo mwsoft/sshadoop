@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jp.mwsoft.sshadoop.mapreduce
+package jp.mwsoft.sshadoop.util
 
 import org.apache.hadoop.io.{ BooleanWritable, ByteWritable, IntWritable, LongWritable, FloatWritable, DoubleWritable }
 import org.apache.hadoop.io.{ Text, BytesWritable, ArrayWritable }
-
 import org.apache.hadoop.io.MapWritable
+import org.apache.hadoop.mapreduce.MapContext
 
 object ImplicitConversions extends ImplicitConversions
 
@@ -69,5 +69,15 @@ trait ImplicitConversions {
   implicit def javaIterator2scalaIterator[A](value: java.util.Iterator[A]) = new Iterator[A] {
     def hasNext = value.hasNext
     def next = value.next
+  }
+
+  implicit def hadoopMapContext2scalaIterator[A, B](value: MapContext[A, B, _, _]) = new Iterator[(A, B)] {
+    var hasnext = true
+    def hasNext = hasnext
+    def next = {
+      hasnext = value.nextKeyValue()
+      if (hasnext) (value.getCurrentKey, value.getCurrentValue)
+      else Iterator.empty.next
+    }
   }
 }

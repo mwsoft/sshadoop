@@ -17,7 +17,7 @@
  */
 package jp.mwsoft.sshadoop.mapred
 
-import jp.mwsoft.sshadoop.mapreduce.ImplicitConversions
+import jp.mwsoft.sshadoop.util.ImplicitConversions
 import org.apache.hadoop.mapred.{ Reducer }
 import org.apache.hadoop.mapred.MapReduceBase
 

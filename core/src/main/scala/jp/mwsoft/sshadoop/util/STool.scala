@@ -19,7 +19,6 @@ package jp.mwsoft.sshadoop.util
 
 import org.apache.hadoop.conf.Configured
 import org.apache.hadoop.util.{ Tool, ToolRunner }
-import jp.mwsoft.sshadoop.mapreduce.ImplicitConversions
 
 trait STool extends Configured with Tool with ImplicitConversions {
 

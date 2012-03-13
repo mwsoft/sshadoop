@@ -18,6 +18,7 @@
 package jp.mwsoft.sshadoop.mapreduce
 
 import org.apache.hadoop.mapreduce.Reducer
+import jp.mwsoft.sshadoop.util.ImplicitConversions
 
 abstract class SReducer[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](
   implicit val keyOutType: Manifest[KEY_OUT], val valOutType: Manifest[VAL_OUT] )
