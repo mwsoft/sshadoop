@@ -71,15 +71,22 @@ trait ImplicitConversions {
     def next = value.next
   }
 
-  implicit def hadoopContext2scalaIterator[A, B](context: MapContext[A, B, _, _]) = new Iterator[(A, B)] {
-    private var hasnext = context.nextKeyValue()
-    def hasNext = hasnext
-    def next = {
-      if (hasnext) {
-        val result = (context.getCurrentKey(), context.getCurrentValue())
-        hasnext = context.nextKeyValue()
-        result
-      } else Iterator.empty.next
+  implicit def hadoopContext2scalaIterator[A, B](that: MapContext[A, B, _, _]) = new Iterator[(A, B)] {
+    var callnext = true
+    var callhasnext = false
+    var hasnext = true
+    def hasNext: Boolean = {
+      callhasnext = true
+      if (callnext) { callnext = false; that.nextKeyValue() }
+      else hasnext
+    }
+
+    def next(): (A, B) = {
+      if (!callhasnext) hasnext = that.nextKeyValue()
+      callnext = true
+      callhasnext = false
+      if (hasnext) (that.getCurrentKey(), that.getCurrentValue())
+      else Iterator.empty.next
     }
   }
 }
