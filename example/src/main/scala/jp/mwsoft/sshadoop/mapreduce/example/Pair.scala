@@ -1,14 +1,15 @@
 package jp.mwsoft.sshadoop.mapreduce.example
 
-import jp.mwsoft.sshadoop.mapreduce._
 import org.apache.hadoop.io._
+import jp.mwsoft.sshadoop.io._
+import jp.mwsoft.sshadoop.mapreduce._
 import jp.mwsoft.sshadoop.util.STool
 
 object Pair extends STool {
 
   def runJob(args: Array[String]): Boolean = {
     new SJob(getConf(), "jobName")
-      .mapper(new PairMapper())
+      //.mapper(new PairMapper())
       .reducer(new PairReducer())
       .combiner(new PairCombiner())
       .fileInputPaths("data/in")
@@ -16,12 +17,11 @@ object Pair extends STool {
       .waitForCompletion(true)
   }
 
-  class PairMapper extends SMapper[LongWritable, Text, Text, MapWritable] {
+  class PairMapper extends SMapper[LongWritable, Text, Text, PairWritable[_, _]] {
     override def map(key: LongWritable, value: Text, context: Context) {
       for (word <- value.split("\\s")) {
-        val map = new MapWritable()
-        map.put(word, 1L)
-        context.write(word, map)
+        val pw = new PairWritable(new Text(word), new LongWritable(1L))
+        context.write(word, pw)
       }
     }
   }
