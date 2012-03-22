@@ -17,9 +17,7 @@
  */
 package jp.mwsoft.sshadoop.util
 
-import org.apache.hadoop.io.{ BooleanWritable, ByteWritable, IntWritable, LongWritable, FloatWritable, DoubleWritable }
-import org.apache.hadoop.io.{ Text, BytesWritable, ArrayWritable }
-import org.apache.hadoop.io.MapWritable
+import org.apache.hadoop.io._
 import org.apache.hadoop.mapreduce.MapContext
 
 object ImplicitConversions extends ImplicitConversions
@@ -42,29 +40,41 @@ trait ImplicitConversions {
   val clsBytesWritable = classOf[BytesWritable]
   val clsArrayWritable = classOf[ArrayWritable]
 
+  trait ConvertHadoopWritable { def toWritable: WritableComparable[_] }
+
+  val trueBooleanWritable = new BooleanWritable(true)
+  val falseBooleanWritable = new BooleanWritable(false)
   implicit def hadoopBooleanWritable2boolean(value: BooleanWritable) = value.get
-  implicit def boolean2hadoopBooleanWritable(value: Boolean) = new BooleanWritable(value)
+  implicit def boolean2hadoopBooleanWritable(value: Boolean) = if (value) trueBooleanWritable else falseBooleanWritable
+  def Boolean2hadoopBooleanWritable(value: Boolean) { def toWritable = boolean2hadoopBooleanWritable(value) }
 
   implicit def hadoopByteWritable2byte(value: ByteWritable) = value.get
   implicit def byte2hadoopByteWritable(value: Byte) = new ByteWritable(value)
+  def Byte2hadoopByteWritable(value: Byte) { def toWritable = byte2hadoopByteWritable(value) }
 
   implicit def hadoopIntWritable2int(value: IntWritable) = value.get
   implicit def int2hadoopIntWritable(value: Int) = new IntWritable(value)
+  def Int2hadoopIntWritable(value: Int) { def toWritable = int2hadoopIntWritable(value) }
 
   implicit def hadoopLongWritable2long(value: LongWritable) = value.get
   implicit def long2hadoopLongWritable(value: Long) = new LongWritable(value)
+  def Long2hadoopLongWritable(value: Long) { def toWritable = long2hadoopLongWritable(value) }
 
   implicit def hadoopFloatWritable2float(value: FloatWritable) = value.get
   implicit def float2hadoopFloatWritable(value: Float) = new FloatWritable(value)
+  def Float2hadoopFloatWritable(value: Float) { def toWritable = float2hadoopFloatWritable(value) }
 
   implicit def hadoopDoubleWritable2double(value: DoubleWritable) = value.get
   implicit def double2hadoopDoubleWritable(value: Double) = new DoubleWritable(value)
+  def Double2hadoopDoubleWritable(value: Double) { def toWritable = double2hadoopDoubleWritable(value) }
 
   implicit def hadoopText2string(value: Text) = value.toString
   implicit def string2hadoopText(value: String) = new Text(value)
+  def String2hadoopText(value: String) { def toWritable = string2hadoopText(value) }
 
   implicit def hadoopBytesWritable2bytes(value: BytesWritable) = value.get
   implicit def bytes2hadoopBytesWritable(value: Array[Byte]) = new BytesWritable(value)
+  def Bytes2hadoopBytesWritable(value: Array[Byte]) { def toWritable = bytes2hadoopBytesWritable(value) }
 
   implicit def javaIterator2scalaIterator[A](value: java.util.Iterator[A]) = new Iterator[A] {
     def hasNext = value.hasNext
@@ -89,4 +99,5 @@ trait ImplicitConversions {
       else Iterator.empty.next
     }
   }
+
 }

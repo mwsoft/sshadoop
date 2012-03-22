@@ -19,19 +19,22 @@ package jp.mwsoft.sshadoop.mapreduce
 
 import org.apache.hadoop.mapreduce.{ Mapper }
 import jp.mwsoft.sshadoop.util.ImplicitConversions
+import org.apache.hadoop.util.ReflectionUtils
 
 abstract class SMapper[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](
-  implicit keyOutType: Manifest[KEY_OUT], valOutType: Manifest[VAL_OUT] )
+  implicit keyOutType: Manifest[KEY_OUT], valOutType: Manifest[VAL_OUT])
     extends SMapperBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT] {
 
   def outputKeyClass = keyOutType.erasure.asInstanceOf[Class[KEY_OUT]]
   def outputValueClass = valOutType.erasure.asInstanceOf[Class[VAL_OUT]]
+
+  val outKey = ReflectionUtils.newInstance(outputKeyClass, null)
+  val outValue = ReflectionUtils.newInstance(outputValueClass, null)
 }
 
 trait SMapperBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT]
     extends Mapper[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT] with ImplicitConversions {
 
   type Context = Mapper[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT]#Context
-  
-  
+
 }
