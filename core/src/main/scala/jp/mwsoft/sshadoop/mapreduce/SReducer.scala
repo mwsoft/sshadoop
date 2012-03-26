@@ -22,14 +22,19 @@ import jp.mwsoft.sshadoop.util.ImplicitConversions
 import org.apache.hadoop.util.ReflectionUtils
 
 abstract class SReducer[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT](
-  implicit val keyOutType: Manifest[KEY_OUT], val valOutType: Manifest[VAL_OUT])
+  implicit val keyOutType: Manifest[KEY_OUT], val valOutType: Manifest[VAL_OUT] )
     extends SReducerBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT] {
 
   def outputKeyClass = keyOutType.erasure.asInstanceOf[Class[KEY_OUT]]
   def outputValueClass = valOutType.erasure.asInstanceOf[Class[VAL_OUT]]
 
-  val outKey = ReflectionUtils.newInstance(outputKeyClass, null)
-  val outValue = ReflectionUtils.newInstance(outputValueClass, null)
+  val outKey: KEY_OUT =
+    try ReflectionUtils.newInstance( outputKeyClass, null )
+    catch { case e => null.asInstanceOf[KEY_OUT] }
+
+  val outValue: VAL_OUT =
+    try ReflectionUtils.newInstance( outputValueClass, null )
+    catch { case e => null.asInstanceOf[VAL_OUT] }
 }
 
 trait SReducerBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT]
@@ -37,8 +42,8 @@ trait SReducerBase[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT]
 
   type Context = Reducer[KEY_IN, VAL_IN, KEY_OUT, VAL_OUT]#Context
 
-  def reduce(key: KEY_IN, values: Iterator[VAL_IN], context: Context) {}
-  override def reduce(key: KEY_IN, values: java.lang.Iterable[VAL_IN], context: Context) {
-    reduce(key, javaIterator2scalaIterator(values.iterator()), context)
+  def reduce( key: KEY_IN, values: Iterator[VAL_IN], context: Context ) {}
+  override def reduce( key: KEY_IN, values: java.lang.Iterable[VAL_IN], context: Context ) {
+    reduce( key, javaIterator2scalaIterator( values.iterator() ), context )
   }
 }

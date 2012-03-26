@@ -45,85 +45,85 @@ import jp.mwsoft.sshadoop.util.ImplicitConversions
  *
  * @author Watanabe Masato
  */
-class SJob(conf: Configuration, jobName: String)
-    extends Job(conf, jobName) with ImplicitConversions {
+class SJob( conf: Configuration, jobName: String )
+    extends Job( conf, jobName ) with ImplicitConversions {
 
-  def this(conf: Configuration) = this(conf, null)
+  def this( conf: Configuration ) = this( conf, null )
 
-  def this(jobName: String) = this(new Configuration(), jobName)
+  def this( jobName: String ) = this( new Configuration(), jobName )
 
-  def this() = this(new Configuration())
-
-  /** FileInputFormat.setInputPaths */
-  def fileInputPaths(paths: Path*) = { FileInputFormat.setInputPaths(this, paths: _*); this }
+  def this() = this( new Configuration() )
 
   /** FileInputFormat.setInputPaths */
-  def fileInputPaths(path: String) = { FileInputFormat.setInputPaths(this, path); this }
+  def fileInputPaths( paths: Path* ) = { FileInputFormat.setInputPaths( this, paths: _* ); this }
+
+  /** FileInputFormat.setInputPaths */
+  def fileInputPaths( path: String ) = { FileInputFormat.setInputPaths( this, path ); this }
 
   /** FileInputFormat.setInputPathFilter */
-  def fileInputPathFilter[T <: PathFilter](filter: Class[T]) = {
-    FileInputFormat.setInputPathFilter(this, filter)
+  def fileInputPathFilter[T <: PathFilter]( filter: Class[T] ) = {
+    FileInputFormat.setInputPathFilter( this, filter )
     this
   }
 
   /** FileOutputFormat.setOutputPaths */
-  def fileOutputPath(path: Path) = { FileOutputFormat.setOutputPath(this, path); this }
+  def fileOutputPath( path: Path ) = { FileOutputFormat.setOutputPath( this, path ); this }
 
   /** FileOutputFormat.setOutputPaths */
-  def fileOutputPath(path: String) = { FileOutputFormat.setOutputPath(this, new Path(path)); this }
+  def fileOutputPath( path: String ) = { FileOutputFormat.setOutputPath( this, new Path( path ) ); this }
 
   /** FileOutputFormat.setCompressOutput */
-  def fileCompressOutput(value: Boolean) = { FileOutputFormat.setCompressOutput(this, true); this }
+  def fileCompressOutput( value: Boolean ) = { FileOutputFormat.setCompressOutput( this, true ); this }
 
   /** FileOutputFormat.setOutputCompressorClass */
-  def fileOutputCompressorClass[T <: CompressionCodec](cls: Class[T]) = {
-    FileOutputFormat.setOutputCompressorClass(this, cls)
+  def fileOutputCompressorClass[T <: CompressionCodec]( cls: Class[T] ) = {
+    FileOutputFormat.setOutputCompressorClass( this, cls )
     this
   }
 
   /** SequenceFileOutputFormat.setOutputCompressionType */
-  def outputCompressionType(style: SequenceFile.CompressionType) = {
-    SequenceFileOutputFormat.setOutputCompressionType(this, style)
+  def outputCompressionType( style: SequenceFile.CompressionType ) = {
+    SequenceFileOutputFormat.setOutputCompressionType( this, style )
     this
   }
 
   /** Job.setCancelDelegationTokenUponJobCompletion */
-  def cancelDelegationTokenUponJobCompletion(value: Boolean) = {
-    this.setCancelDelegationTokenUponJobCompletion(value)
+  def cancelDelegationTokenUponJobCompletion( value: Boolean ) = {
+    this.setCancelDelegationTokenUponJobCompletion( value )
     this
   }
 
   /** Job.setCombinerClass */
-  def combiner[T <: Reducer[_, _, _, _]](combiner: T) = { this.setReducerClass(combiner.getClass()); this }
+  def combiner[T <: Reducer[_, _, _, _]]( combiner: T ) = { this.setCombinerClass( combiner.getClass() ); this }
 
   /** Job.setCombinerClass */
-  def combinerClass[T <: Reducer[_, _, _, _]](cls: Class[T]) = { this.setReducerClass(cls); this }
+  def combinerClass[T <: Reducer[_, _, _, _]]( cls: Class[T] ) = { this.setCombinerClass( cls ); this }
 
   /** Job.setGroupingComparatorClass */
-  def groupingComparatorClass[T <: RawComparator[_]](cls: Class[T]) = { this.setGroupingComparatorClass(cls); this }
+  def groupingComparatorClass[T <: RawComparator[_]]( cls: Class[T] ) = { this.setGroupingComparatorClass( cls ); this }
 
   /** Job.setInputFormatClass */
-  def inputFormatClass[T <: InputFormat[_, _]](cls: Class[T]) = { this.setInputFormatClass(cls); this }
+  def inputFormatClass[T <: InputFormat[_, _]]( cls: Class[T] ) = { this.setInputFormatClass( cls ); this }
 
   /** Job.setJarByClass */
-  def jarByClass(cls: Class[_]) = { this.setJarByClass(cls); this }
+  def jarByClass( cls: Class[_] ) = { this.setJarByClass( cls ); this }
 
   /** Job.setJobName */
-  def jobName(name: String) = { this.setJobName(name); this }
+  def jobName( name: String ) = { this.setJobName( name ); this }
 
   /** Job.setMapOutputKeyClass */
-  def mapOutputKeyClass(cls: Class[_]) = { this.setMapOutputKeyClass(cls); this }
+  def mapOutputKeyClass( cls: Class[_] ) = { this.setMapOutputKeyClass( cls ); this }
 
   /** Job.setMapOutputValueClass */
-  def mapOutputValueClass(cls: Class[_]) = { this.setMapOutputValueClass(cls); this }
+  def mapOutputValueClass( cls: Class[_] ) = { this.setMapOutputValueClass( cls ); this }
 
   /**
    * setMapOutputKeyClass( keyCls )
    * setMapOutputValueClass( valueCls )
    */
-  def mapOutputKeyValueClass(keyCls: Class[_], valueCls: Class[_]) = {
-    this.setMapOutputKeyClass(keyCls)
-    this.setMapOutputValueClass(valueCls)
+  def mapOutputKeyValueClass( keyCls: Class[_], valueCls: Class[_] ) = {
+    this.setMapOutputKeyClass( keyCls )
+    this.setMapOutputValueClass( valueCls )
     this
   }
 
@@ -132,76 +132,76 @@ class SJob(conf: Configuration, jobName: String)
    * Job.setMapperClass( inst.getClass )
    * If instance isInstanceOf SMapper, call setMapOutputKeyClass and setMapOutputValueClass automatically.
    */
-  def mapper[T <: Mapper[_, _, _, _]](inst: T) = {
-    if (inst.isInstanceOf[SMapper[_, _, _, _]]) {
+  def mapper[T <: Mapper[_, _, _, _]]( inst: T ) = {
+    if ( inst.isInstanceOf[SMapper[_, _, _, _]] ) {
       val sinst = inst.asInstanceOf[SMapper[_, _, _, _]]
-      this.setMapOutputKeyClass(sinst.outputKeyClass)
-      this.setMapOutputValueClass(sinst.outputValueClass)
+      this.setMapOutputKeyClass( sinst.outputKeyClass )
+      this.setMapOutputValueClass( sinst.outputValueClass )
     }
-    this.setJarByClass(inst.getClass)
-    this.setMapperClass(inst.getClass)
+    this.setJarByClass( inst.getClass )
+    this.setMapperClass( inst.getClass )
     this
   }
 
   /** Job.setMapperClass */
-  def mapperClass[T <: Mapper[_, _, _, _]](cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null) = {
-    this.setMapperClass(cls)
-    if (keyOutCls != null) this.setMapOutputKeyClass(keyOutCls)
-    if (valOutCls != null) this.setMapOutputValueClass(keyOutCls)
+  def mapperClass[T <: Mapper[_, _, _, _]]( cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null ) = {
+    this.setMapperClass( cls )
+    if ( keyOutCls != null ) this.setMapOutputKeyClass( keyOutCls )
+    if ( valOutCls != null ) this.setMapOutputValueClass( keyOutCls )
     this
   }
 
   /** Job.setNumReduceTasks */
-  def numReduceTasks(num: Int) = { this.setNumReduceTasks(num); this }
+  def numReduceTasks( num: Int ) = { this.setNumReduceTasks( num ); this }
 
   /** Job.setOutputFormatClass */
-  def outputFormatClass[T <: OutputFormat[_, _]](cls: Class[T]) = { this.setOutputFormatClass(cls); this }
+  def outputFormatClass[T <: OutputFormat[_, _]]( cls: Class[T] ) = { this.setOutputFormatClass( cls ); this }
 
   /** Job.setOutputKeyClass */
-  def outputKeyClass(cls: Class[_]) = { this.setOutputKeyClass(cls); this }
+  def outputKeyClass( cls: Class[_] ) = { this.setOutputKeyClass( cls ); this }
 
   /**
    * Job.setOutputKeyClass( keyCls )
    * Job.setOutputValueClass( valueCls )
    */
-  def outputKeyValueClass(keyCls: Class[_], valueCls: Class[_]) = {
-    this.setOutputKeyClass(keyCls)
-    this.setOutputValueClass(valueCls)
+  def outputKeyValueClass( keyCls: Class[_], valueCls: Class[_] ) = {
+    this.setOutputKeyClass( keyCls )
+    this.setOutputValueClass( valueCls )
     this
   }
 
   /** Job.setOutputValueClass */
-  def outputValueClass(cls: Class[_]) = { this.setOutputValueClass(cls); this }
+  def outputValueClass( cls: Class[_] ) = { this.setOutputValueClass( cls ); this }
 
   /** Job.setPartitionerClass */
-  def partitionerClass[T <: Partitioner[_, _]](cls: Class[T]) = { this.setPartitionerClass(cls); this }
+  def partitionerClass[T <: Partitioner[_, _]]( cls: Class[T] ) = { this.setPartitionerClass( cls ); this }
 
   /**
    * Job.setReducerClass( inst.getClass )
    * If instance isInstanceOf SReducer, call setOutputKeyClass and setOutputValueClass automatically.
    */
-  def reducer(inst: Reducer[_, _, _, _]) = {
-    if (inst.isInstanceOf[SReducer[_, _, _, _]]) {
+  def reducer( inst: Reducer[_, _, _, _] ) = {
+    if ( inst.isInstanceOf[SReducer[_, _, _, _]] ) {
       val sInst = inst.asInstanceOf[SReducer[_, _, _, _]]
-      this.setOutputKeyClass(sInst.outputKeyClass)
-      this.setOutputValueClass(sInst.outputValueClass)
+      this.setOutputKeyClass( sInst.outputKeyClass )
+      this.setOutputValueClass( sInst.outputValueClass )
     }
-    this.setReducerClass(inst.getClass())
+    this.setReducerClass( inst.getClass() )
     this
   }
 
   /** Job.setReducerClass */
-  def reducerClass[T <: Reducer[_, _, _, _]](cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null) = {
-    this.setReducerClass(cls)
-    if (keyOutCls != null) this.setOutputKeyClass(keyOutCls)
-    if (valOutCls != null) this.setOutputValueClass(valOutCls)
+  def reducerClass[T <: Reducer[_, _, _, _]]( cls: Class[T], keyOutCls: Class[_] = null, valOutCls: Class[_] = null ) = {
+    this.setReducerClass( cls )
+    if ( keyOutCls != null ) this.setOutputKeyClass( keyOutCls )
+    if ( valOutCls != null ) this.setOutputValueClass( valOutCls )
     this
   }
 
   /** Job.sortComparatorClass */
-  def sortComparatorClass[T <: RawComparator[_]](cls: Class[T]) = { this.setSortComparatorClass(cls); this }
+  def sortComparatorClass[T <: RawComparator[_]]( cls: Class[T] ) = { this.setSortComparatorClass( cls ); this }
 
   /** Job.setWorkingDirectory */
-  def workingDirectory(path: Path) = { this.setWorkingDirectory(path); this }
+  def workingDirectory( path: Path ) = { this.setWorkingDirectory( path ); this }
 
 }
